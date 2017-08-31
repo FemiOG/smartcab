@@ -26,6 +26,7 @@ class LearningAgent(Agent):
         # Set any additional class parameters as needed
         self.learn_count = 0
         self.islearn = False
+        self.trials = 0 
 
 
     def reset(self, destination=None, testing=False):
@@ -42,7 +43,9 @@ class LearningAgent(Agent):
         # Update epsilon using a decay function of your choice
         # Update additional class parameters as needed
         # If 'testing' is True, set epsilon and alpha to 0
-        self.epsilon = self.epsilon - 0.004
+        self.trials = self.trials + 1
+        self.epsilon = math.pow(0.999, self.trials)
+        # self.epsilon = float(1)/math.exp(float( 0. * self.trials))
         if testing: 
             alpha = 0
             epsilon = 0
@@ -96,7 +99,7 @@ class LearningAgent(Agent):
         # If it is not, create a new dictionary for that state
         #   Then, for each action available, set the initial Q-value to 0.0
         
-        if state not in self.Q.keys():
+        if str(state) not in self.Q.keys():
             self.Q[str(state)] = {None:0.0,"right":0.0,"left":0.0,"forward":0.0}
 
         
@@ -127,17 +130,24 @@ class LearningAgent(Agent):
             # action_index = random.randint(0, 3)
             # action = self.valid_actions[action_index]
         else:
-            if self.epsilon > random.random():
+            if (self.epsilon) > random.random():
                 action = random.choice(self.valid_actions)
+                print 'random'
             else:
                 max_actionlist = []
                 maxQ = self.get_maxQ(self.Q[state])
-                for k, v in self.Q[state].items():
-                    if v == maxQ:
-                        max_actionlist.append(k)
+                for act in self.valid_actions:
+                    if self.Q[state][act] == maxQ:
+                        max_actionlist.append(act)
                 action = random.choice(max_actionlist)
-                self.learn_count = self.learn_count + 1
-                self.islearn = True
+                
+                # for k, v in self.Q[state].items():
+                #     if v == maxQ:
+                #         action = k
+                        # max_actionlist.append(k)
+                # action = random.choice(max_actionlist)
+                # print max_actionlist
+                # print value
         print 'learn count: ' + str(self.learn_count) 
         if self.islearn:
             print 'action from Q table: ' + str(action)
@@ -195,7 +205,7 @@ def run():
     #   learning   - set to True to force the driving agent to use Q-learning
     #    * epsilon - continuous value for the exploration factor, default is 1
     #    * alpha   - continuous value for the learning rate, default is 0.5
-    agent = env.create_agent(LearningAgent,learning = True)
+    agent = env.create_agent(LearningAgent,learning = True,alpha=0.01)
     
     ##############
     # Follow the driving agent
@@ -210,14 +220,14 @@ def run():
     #   display      - set to False to disable the GUI if PyGame is enabled
     #   log_metrics  - set to True to log trial and simulation results to /logs
     #   optimized    - set to True to change the default log file name
-    sim = Simulator(env, display=False,update_delay=0.01,log_metrics=True)
+    sim = Simulator(env, display=False,update_delay=0.0001,log_metrics=True, optimized=True)
     
     ##############
     # Run the simulator
     # Flags:
     #   tolerance  - epsilon tolerance before beginning testing, default is 0.05 
     #   n_test     - discrete number of testing trials to perform, default is 0
-    sim.run(n_test = 10)
+    sim.run(n_test =10,tolerance = 0.006)
     
 
 
